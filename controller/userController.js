@@ -5,9 +5,8 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User.js");
 
 router.post("/register", async (req, res, next) => {
-
   //data from frontend
-  let { username, email, password, phoneNumber } = req.body; //destructuring
+  const { username, email, password, phoneNumber } = req.body; //destructuring
 
   if (!username || typeof username !== "string") {
     return res.json({ status: "error", error: "Invalid username" });
@@ -17,19 +16,14 @@ router.post("/register", async (req, res, next) => {
     return res.json({ status: "error", error: "Invalid email" });
   }
 
-  //password encryption for security
-  bcrypt.hash(password, 12, function (err, hashPassword) {
-    if (err) {
-      return res.json({ status: "error", error: "Invalid password" });
-    }
-    password = hashPassword;
-  });
-
   try {
-    let response = await User.create({
+    // password encryption for security
+    const hashPassword = await bcrypt.hash(password, 12);
+
+    const response = await User.create({
       username,
       email,
-      password,
+      password: hashPassword,
       phoneNumber,
     });
     console.log("User created successfully: ", response);
