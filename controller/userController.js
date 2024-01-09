@@ -2,7 +2,10 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+
+
 const User = require("../models/User.js");
+
 
 router.post("/register", async (req, res, next) => {
   //data from frontend
@@ -29,11 +32,36 @@ router.post("/register", async (req, res, next) => {
     console.log("User created successfully: ", response);
   } catch (error) {
     if (error.code === 11000) {
-      return res.json({ status: "error", error: "Username already in use" });
+      return res.status(409).json({ status: "error", error: "Username already in use" });
     }
     throw error;
   }
   res.json({ status: "ok" });
+});
+
+router.post("/sign", async (req, res) => {
+  
+  const { username, password } = req.body;
+  console.log(req.body);
+  const user = await User.findOne({ username }).select('+password');
+  console.log(user);
+
+  if (!user) {
+    return res.status(401).json({ status: "error", error: "Invalid username or password" });
+  }
+
+  if (await bcrypt.compare(password, user.password)) {
+    const token = jwt.sign(
+      {
+        id: user._id,
+        username: user.username,
+      },
+      process.env.JWT_SECRET
+    );
+    return res.json({ status: "ok", data: token });
+  }else{
+    return res.json({ status: "error", error: "Invalid username or password" });
+  }
 });
 
 module.exports = router;
