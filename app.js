@@ -2,6 +2,8 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const bodyParser = require("body-parser");
+const routes = require("./server");
+//const routes = require('./routes');
 
 const user = require("./controller/userController");
 
@@ -18,6 +20,6 @@ if (process.env.NODE_ENV !== "production") {
 
 app.use("/api", user);
 
-
-
 module.exports = app;
+module.exports = routes;
+//hi
