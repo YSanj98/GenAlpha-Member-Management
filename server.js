@@ -1,27 +1,14 @@
 const app = require("./app");
-const mongoose = require("mongoose");
-const path = require("path"); // Don't forget to require 'path'
-const { sendPasswordResetOTPEmail } = require('../controller/userController.js'
-);
-require("config/.env");
-//const { sendPasswordResetOTPEmail } = require ("./controller");
+const connectDb = require("./database/database");
 
+if (process.env.NODE_ENV == "production") {
+  require("dotenv").config({ path: path.join(__dirname, "config", ".env") }); 
+}
 
+connectDb();
 
-// Load environment variables from .env file
-require("dotenv").config({ path: path.join(__dirname, "config", ".env") });
-
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-
-// Handle database connection error
-const db = mongoose.connection;
-db.on("error", console.error.bind(console, "MongoDB connection error:"));
-
-const PORT = process.env.PORT || 3000;
-
-const server = app.listen(PORT, () => {
-  console.log(`App running on http://localhost:${PORT}`);
+const server = app.listen(process.env.PORT, () => {
+  console.log(`App running on http://localhost:${process.env.PORT}`);
 });
 
 process.on("uncaughtException", (err) => {
@@ -37,21 +24,3 @@ process.on("unhandledRejection", (err) => {
     process.exit(1);
   });
 });
-
-//pasword reset 
-router.Post("/", async (req, res) => {
-  try {
-    const { email } =  req.body;
-    if (!email) throw Error("An email is required.");
-
-const createPasswordResetOTP = await
-sendPasswordResetOTPEmail(email);
-res.status(200).json(createPasswordResetOTP);
-
-  } catch (Error) {
-    res.status(400).send(error.massage);
-  }
-});
-
-
-module.exports = router;
