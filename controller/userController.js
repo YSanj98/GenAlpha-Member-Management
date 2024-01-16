@@ -2,12 +2,14 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const sendMails = require("../utils/sendMails.js");
 
 const User = require("../models/User.js");
 
 router.post("/register", async (req, res, next) => {
   //data from frontend
-  const { firstName, lastName, username, email, password, phoneNumber } = req.body; //destructuring
+  const { firstName, lastName, username, email, password, phoneNumber } =
+    req.body; //destructuring
 
   if (!username || typeof username !== "string") {
     return res.json({ status: "error", error: "Invalid username" });
@@ -67,26 +69,41 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.post("/forgot-password", async (req, res) => {
-  const { token, newPassword } = req.body;
-  console.log(req.body);
+router.post("/forgotPassword", async (req, res) => {
+  const user = await User.findOne(
+    { email: req.body.email } || { phoneNumber: req.body.phoneNumber }
+  );
+  if (!user) {
+    return res.status(400).json({ status: "error", error: "Invalid username" });
+  }
+
+  const resetToken = user.generatePasswordResetToken();
+  await user.save();
+
+  const resetUrl = `http://localhost:3001/api/resetPassword/${resetToken}`;
+
+  const emailBody = `<p>Hi ${user.firstName},</p> 
+<p>Click the link below to reset your password</p>
+<a href="${resetUrl}">${resetUrl}</a>`;
+
+  console.log(emailBody);
 
   try {
-    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-    const { id } = decodedToken;
-
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
-
-    // Update the user's password in the database
-    await User.findByIdAndUpdate(id, { $set: { password: hashedPassword } });
-
-    res.json({ status: "ok" });
+    await sendMails({
+      email: user.email,
+      subject: "Password reset",
+      message: emailBody,
+    });
+    res.status(201).json({
+      success: true,
+      message: `Check ${user.email} to reset your password`,
+    });
   } catch (error) {
-    console.error(error);
-    res.status(400).json({ status: "error", error: "Invalid or expired token" });
+    user.passwordResetToken = undefined;
+    user.passwordResetExpire = undefined;
+    await user.save();
+    return res.status(400).json({ status: "Failed", error: error.message });
   }
 });
-
 
 module.exports = router;
