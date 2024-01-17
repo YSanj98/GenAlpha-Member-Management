@@ -3,11 +3,12 @@ const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const sendMails = require("../utils/sendMails.js");
+const crypto = require("crypto");
 
 const User = require("../models/User.js");
 
 router.post("/register", async (req, res, next) => {
-  //data from frontend
+  //data from frontend when user registers
   const { firstName, lastName, username, email, password, phoneNumber } =
     req.body; //destructuring
 
@@ -43,6 +44,7 @@ router.post("/register", async (req, res, next) => {
   res.json({ status: "ok" });
 });
 
+//user login api endpoint
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
   console.log(req.body);
@@ -55,7 +57,7 @@ router.post("/login", async (req, res) => {
       .json({ status: "error", error: "Invalid username or password" });
   }
 
-  if (await bcrypt.compare(password, user.password)) {
+  if (await bcrypt.compare(password, user.password)) { //compare password with hashed password
     const token = jwt.sign(
       {
         id: user._id,
@@ -69,6 +71,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
+//forgot password api endpoint
 router.post("/forgotPassword", async (req, res) => {
   const user = await User.findOne(
     { email: req.body.email } || { phoneNumber: req.body.phoneNumber }
@@ -80,16 +83,14 @@ router.post("/forgotPassword", async (req, res) => {
   const resetToken = user.generatePasswordResetToken();
   await user.save();
 
-  const resetUrl = `http://localhost:3001/api/resetPassword/${resetToken}`;
+  const resetUrl = `http://localhost:3001/api/resetPassword/${resetToken}`; 
 
-  const emailBody = `<p>Hi ${user.firstName},</p> 
-<p>Click the link below to reset your password</p>
-<a href="${resetUrl}">${resetUrl}</a>`;
-
-  console.log(emailBody);
+  //send email to user and provide link to reset password. forgot passwprd means user need to reset the password
+  const emailBody = `Hi ${user.firstName}, 
+  Click the link below to reset your password ${resetUrl}`;
 
   try {
-    await sendMails({
+    await sendMails({ //send email to user using nodemailer. configs are in utils/sendMails.js
       email: user.email,
       subject: "Password reset",
       message: emailBody,
@@ -104,6 +105,53 @@ router.post("/forgotPassword", async (req, res) => {
     await user.save();
     return res.status(400).json({ status: "Failed", error: error.message });
   }
+});
+
+
+//reset password api endpoint
+router.post("/resetPassword/:token", async (req, res) => { //token is the resetToken generated in forgot password api endpoint
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpire: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    return res
+      .status(400)
+      .json({ status: "Failed", error: "Token invalid or Expired" });
+  }
+
+  const hashPassword = await bcrypt.hash(req.body.passwordNew, 12); //hash the new password
+  user.password = hashPassword;
+  user.passwordConfirm = req.body.passwordConfirm;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpire = undefined;
+  user.passwordChangedDate = Date.now();
+
+  await user.save();
+
+  const token = jwt.sign(
+    {
+      id: user._id,
+      username: user.username,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_EXPIRES_IN,
+    }
+  );
+
+  res.status(200).json({
+    id: user._id,
+    results: {
+      token,
+    },
+  });
 });
 
 module.exports = router;

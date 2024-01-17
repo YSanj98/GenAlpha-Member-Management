@@ -42,11 +42,11 @@ const userSchema = new schema(
 
 userSchema.methods.generatePasswordResetToken = function () {
   const resetToken = crypto.randomBytes(20).toString("hex");
-  this.resetPasswordToken = crypto
+  this.passwordResetToken = crypto
     .createHash("sha256")
     .update(resetToken)
     .digest("hex");
-  this.resetPasswordExpire = Date.now() + 10 * (30 * 1000);
+  this.passwordResetExpire = Date.now() + 10 * (30 * 1000);
   return resetToken;
 };
 
