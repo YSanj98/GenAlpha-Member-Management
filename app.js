@@ -4,6 +4,7 @@ const path = require("path");
 const bodyParser = require("body-parser");
 
 const user = require("./controller/userController");
+const settings = require("./controller/settingController");
 
 const app = express();
 
@@ -17,6 +18,7 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 app.use("/api", user);
+app.use("/api", settings);
 
 
 
