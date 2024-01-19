@@ -36,6 +36,21 @@ const userSchema = new schema(
     passwordResetExpire: {
       type: Date,
     },
+    address: {
+      type: String,
+    },
+    gender: {
+      type: String,
+    },
+    birthday: {
+      type: Date,
+    },
+    about: {
+      type: String,
+    },
+    portfolioLink: {
+      type: String,
+    }, 
   },
   { timestamps: true }
 );

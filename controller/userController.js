@@ -6,7 +6,10 @@ const sendMails = require("../utils/sendMails.js");
 const crypto = require("crypto");
 
 const User = require("../models/User.js");
+const isAuthenticated= require("../middleware/auth.js");
 
+
+//user register api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/register", async (req, res, next) => {
   //data from frontend when user registers
   const { firstName, lastName, username, email, password, phoneNumber } =
@@ -44,10 +47,9 @@ router.post("/register", async (req, res, next) => {
   res.json({ status: "ok" });
 });
 
-//user login api endpoint
+//user login api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  console.log(req.body);
   const user = await User.findOne({ username }).select("+password");
   console.log(user);
 
@@ -57,7 +59,8 @@ router.post("/login", async (req, res) => {
       .json({ status: "error", error: "Invalid username or password" });
   }
 
-  if (await bcrypt.compare(password, user.password)) { //compare password with hashed password
+  if (await bcrypt.compare(password, user.password)) {
+    //compare password with hashed password
     const token = jwt.sign(
       {
         id: user._id,
@@ -65,13 +68,13 @@ router.post("/login", async (req, res) => {
       },
       process.env.JWT_SECRET
     );
-    return res.json({ status: "ok", data: token });
+    return res.json({ status: "ok", token: token });
   } else {
     return res.json({ status: "error", error: "Invalid username or password" });
   }
 });
 
-//forgot password api endpoint
+//forgot password api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/forgotPassword", async (req, res) => {
   const user = await User.findOne(
     { email: req.body.email } || { phoneNumber: req.body.phoneNumber }
@@ -83,14 +86,15 @@ router.post("/forgotPassword", async (req, res) => {
   const resetToken = user.generatePasswordResetToken();
   await user.save();
 
-  const resetUrl = `http://localhost:3001/api/resetPassword/${resetToken}`; 
+  const resetUrl = `http://localhost:3001/api/resetPassword/${resetToken}`;
 
   //send email to user and provide link to reset password. forgot passwprd means user need to reset the password
   const emailBody = `Hi ${user.firstName}, 
   Click the link below to reset your password ${resetUrl}`;
 
   try {
-    await sendMails({ //send email to user using nodemailer. configs are in utils/sendMails.js
+    await sendMails({
+      //send email to user using nodemailer. configs are in utils/sendMails.js
       email: user.email,
       subject: "Password reset",
       message: emailBody,
@@ -107,9 +111,9 @@ router.post("/forgotPassword", async (req, res) => {
   }
 });
 
-
-//reset password api endpoint
-router.post("/resetPassword/:token", async (req, res) => { //token is the resetToken generated in forgot password api endpoint
+//reset password api endpoint---------------------------------------------------------------------------------------------------------------------------
+router.post("/resetPassword/:token", async (req, res) => {
+  //token is the resetToken generated in forgot password api endpoint
   const hashedToken = crypto
     .createHash("sha256")
     .update(req.params.token)
