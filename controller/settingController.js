@@ -1,4 +1,3 @@
-
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
@@ -9,23 +8,23 @@ const User = require("../models/User.js");
 const isAuthenticated = require("../middleware/auth.js");
 
 //change password api endpoint---------------------------------------------------------------------------------------------------------------------------
-router.post("/changePassword",isAuthenticated, async (req, res) => {
+router.post("/changePassword", isAuthenticated, async (req, res) => {
   try {
-    const user_id = req.body.user_id;
     const currentPassword = req.body.currentPassword;
     const newPassword = req.body.newPassword;
 
-    console.log(user_id, currentPassword, newPassword);
+    const data = await User.findById(req.user.id).select("+password");
 
-    const user = await User.findOne({ _id:user_id }).select("+password");
-
-    if (!user) {
+    if (!data) {
       return res
         .status(401)
-        .json({ status: "error", error: "Invalid username or password" });
+        .json({ status: "error", error: "Invalid password" });
     }
 
-    const isPasswordMatch = await bcrypt.compare(currentPassword, user.password);
+    const isPasswordMatch = await bcrypt.compare(
+      currentPassword,
+      data.password
+    );
 
     if (!isPasswordMatch) {
       return res
@@ -36,7 +35,7 @@ router.post("/changePassword",isAuthenticated, async (req, res) => {
     const hashPassword = await bcrypt.hash(newPassword, 12);
 
     await User.updateOne(
-      { _id: user_id },
+      { _id: req.user.id },
       {
         $set: {
           password: hashPassword,
@@ -50,6 +49,5 @@ router.post("/changePassword",isAuthenticated, async (req, res) => {
     console.log(error);
   }
 });
-
 
 module.exports = router;
