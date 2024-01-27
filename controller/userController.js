@@ -7,7 +7,9 @@ const crypto = require("crypto");
 
 const User = require("../models/User.js");
 const isAuthenticated= require("../middleware/auth.js");
+const generateOTP = require("../utils/generateOTP.js");
 
+const otpStore = {};
 
 //user register api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/register", async (req, res, next) => {
@@ -76,38 +78,56 @@ router.post("/login", async (req, res) => {
 
 //forgot password api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/forgotPassword", async (req, res) => {
-  const user = await User.findOne(
-    { email: req.body.email } || { phoneNumber: req.body.phoneNumber }
-  );
+  const otp = generateOTP(); //generate otp using otp-generator. configs are in utils/generateOTP.js  
+  const userIdentifier = req.body.email 
+  
+  const user = await User.findOne({email:userIdentifier}); //find user by email or phone number
+
+  otpStore[userIdentifier] = {
+    otp, expireAt: Date.now() +  60*2000
+  };
+
   if (!user) {
     return res.status(400).json({ status: "error", error: "Invalid username" });
   }
 
-  const resetToken = user.generatePasswordResetToken();
-  await user.save();
-
-  const resetUrl = `http://localhost:3001/api/resetPassword/${resetToken}`;
-
   //send email to user and provide link to reset password. forgot passwprd means user need to reset the password
   const emailBody = `Hi ${user.firstName}, 
-  Click the link below to reset your password ${resetUrl}`;
+  Your OTP is ${otp}`;
 
   try {
     await sendMails({
       //send email to user using nodemailer. configs are in utils/sendMails.js
       email: user.email,
-      subject: "Password reset",
+      subject: "GAP password reset",
       message: emailBody,
     });
     res.status(201).json({
       success: true,
-      message: `Check ${user.email} to reset your password`,
+      message: `Check ${user.email} and use the OTP to reset your password`,
     });
   } catch (error) {
-    user.passwordResetToken = undefined;
-    user.passwordResetExpire = undefined;
-    await user.save();
     return res.status(400).json({ status: "Failed", error: error.message });
+  }
+
+});
+
+//verify otp api endpoint---------------------------------------------------------------------------------------------------------------------------
+router.post("/verifyOTP", async (req, res) => {
+  const {otp} = req.body;
+  console.log(otp);
+  const storedOTP = Object.values(otpStore).find((stored) => stored.otp === otp);
+
+  if(storedOTP && storedOTP.expireAt > Date.now()){
+    return res.status(200).json({
+      status: "success",
+      message: "OTP verified successfully",
+    });
+  }else {
+    return res.status(400).json({
+      status: "Failed",
+      message: "Invalid OTP",
+    });
   }
 });
 
