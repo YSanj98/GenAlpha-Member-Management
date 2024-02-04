@@ -11,12 +11,14 @@ router.post("/changePassword", isAuthenticated, async (req, res) => {
     const currentPassword = req.body.currentPassword;
     const newPassword = req.body.newPassword;
 
+    console.log(currentPassword, newPassword);
+
     const data = await User.findById(req.user.id).select("+password");
 
     if (!data) {
       return res
-        .status(401)
-        .json({ status: "error", error: "Invalid password" });
+        .status(404)
+        .json({ status: "error", error: "User not found" });
     }
 
     const isPasswordMatch = await bcrypt.compare(
@@ -57,8 +59,8 @@ router.post("/deleteAccount", isAuthenticated, async (req, res) => {
 
     if (!data) {
       return res
-        .status(401)
-        .json({ status: "error", error: "Invalid password" });
+        .status(404)
+        .json({ status: "error", error: "User not found" });
     }
 
     const isPasswordMatch = await bcrypt.compare(password, data.password);
@@ -81,5 +83,4 @@ router.post("/deleteAccount", isAuthenticated, async (req, res) => {
     console.log(error);
   }
 });
-
 module.exports = router;
