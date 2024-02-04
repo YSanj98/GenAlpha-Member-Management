@@ -53,7 +53,7 @@ router.post("/register", async (req, res, next) => {
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
   const user = await User.findOne({ username }).select("+password");
-  console.log(user);
+  console.log("login user details :-" + user);
 
   if (!user) {
     return res
@@ -132,7 +132,29 @@ router.post("/verifyOTP", async (req, res) => {
 });
 
 //reset password api endpoint---------------------------------------------------------------------------------------------------------------------------
-router.post("/resetPassword/:token", async (req, res) => {
+router.post("/resetPassword", async (req, res) => {
+  const {otp, password} = req.body;
+  const storedOTP = Object.values(otpStore).find((stored) => stored.otp === otp);
+
+  if(storedOTP && storedOTP.expireAt > Date.now()){
+    const user = await User.findOne({email:storedOTP.email});
+    const hashPassword = await bcrypt.hash(password, 12);
+    user.password = hashPassword;
+    await user.save();
+    return res.status(200).json({
+      status: "success",
+      message: "Password reset successfully",
+    });
+  }else {
+    return res.status(400).json({
+      status: "Failed",
+      message: "Invalid OTP",
+    });
+  }
+});
+
+//change password api endpoint---------------------------------------------------------------------------------------------------------------------------
+router.post("/changePassword/",isAuthenticated, async (req, res) => {
   //token is the resetToken generated in forgot password api endpoint
   const hashedToken = crypto
     .createHash("sha256")
