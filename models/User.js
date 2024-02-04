@@ -38,8 +38,14 @@ const userSchema = new schema(
     },
     personalDetails: [
       {
+        title: {
+          type: String,
+        },
         address: {
           type: String,
+        },
+        telephone: {
+          type: Number,
         },
         gender: {
           type: String,
@@ -47,7 +53,7 @@ const userSchema = new schema(
         birthday: {
           type: Date,
         },
-        about: {
+        description: {
           type: String,
         },
         portfolioLink: {
@@ -67,19 +73,44 @@ const userSchema = new schema(
     ],
     academicDetails: [
       {
-        Institute: {
+        institute: {
           type: String,
         },
-        Degree: {
+        degree: {
           type: String,
         },
-        StartDate: {
+        startDate: {
           type: Date,
         },
-        EndDate: {
+        endDate: {
           type: Date,
         },
-        Grade: {
+        grade: {
+          type: String,
+        },
+      },
+    ],
+    professionalDetails: [
+      {
+        position: {
+          type: String,
+        },
+        empType: {
+          type: String,
+        },
+        companyName: {
+          type: String,
+        },
+        locationType: {
+          type: String,
+        },
+        startDate: {
+          type: Date,
+        },
+        endDate: {
+          type: Date,
+        },
+        skills: {
           type: String,
         },
       },
