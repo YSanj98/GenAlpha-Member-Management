@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const multer = require("multer");
+const fs = require("fs");
+const path = require("path");
 const User = require("../models/User.js");
 const isAuthenticated = require("../middleware/auth.js");
+const { upload } = require("../utils/multer.js");
 
 router.get("/getUser", isAuthenticated, async (req, res) => {
   try {
@@ -15,7 +17,15 @@ router.get("/getUser", isAuthenticated, async (req, res) => {
 });
 
 router.post("/personalDetails", isAuthenticated, async (req, res) => {
-  const { title, address,telephone, gender, birthday, description, portfolioLink } = req.body;
+  const {
+    title,
+    address,
+    telephone,
+    gender,
+    birthday,
+    description,
+    portfolioLink,
+  } = req.body;
 
   const user = await User.findById(req.user.id);
 
@@ -59,7 +69,7 @@ router.post("/academicDetails", isAuthenticated, async (req, res) => {
     const response = await User.updateOne(
       { _id: req.user.id },
       {
-        $set: {
+        $push: {
           academicDetails: {
             institute,
             degree,
@@ -85,7 +95,15 @@ router.post("/academicDetails", isAuthenticated, async (req, res) => {
 });
 
 router.post("/professionalDetails", isAuthenticated, async (req, res) => {
-  const { position, empType, companyName, locationType, startDate, endDate, skills } = req.body;
+  const {
+    position,
+    empType,
+    companyName,
+    locationType,
+    startDate,
+    endDate,
+    skills,
+  } = req.body;
 
   const user = await User.findById(req.user.id);
 
@@ -93,7 +111,7 @@ router.post("/professionalDetails", isAuthenticated, async (req, res) => {
     const response = await User.updateOne(
       { _id: req.user.id },
       {
-        $set: {
+        $push: {
           professionalDetails: {
             position,
             empType,
@@ -101,15 +119,16 @@ router.post("/professionalDetails", isAuthenticated, async (req, res) => {
             locationType,
             startDate,
             endDate,
-            skills
+            skills,
           },
         },
       }
     );
     console.log("Professional details added successfully: ", response);
-    res
-      .status(200)
-      .json({ status: "ok", message: "Professional details added successfully" });
+    res.status(200).json({
+      status: "ok",
+      message: "Professional details added successfully",
+    });
   } catch (error) {
     if (error.code === 11000) {
       return res
@@ -148,5 +167,43 @@ router.post("/SocialMedia", isAuthenticated, async (req, res) => {
     throw error;
   }
 });
+
+router.post(
+  "/photoUpload",
+  upload.single("file"),
+  isAuthenticated,
+  async (req, res) => {
+    const user = await User.findById(req.user.id);
+    try {
+      const filename = req.file.filename;
+      const fileUrl = path.join(filename);
+
+      const response = await User.updateOne(
+        { _id: req.user.id },
+        {
+          $set: {
+            profilePicture: {
+              name: req.body.name,
+              img: {
+                url: fileUrl,
+              },
+            },
+          },
+        }
+      );
+      console.log("Photo uploaded successfully: ", response);
+      res
+        .status(200)
+        .json({ status: "ok", message: "Photo uploaded successfully" });
+    } catch (error) {
+      if (error.code === 11000) {
+        return res
+          .status(409)
+          .json({ status: "error", error: "Username already in use" });
+      }
+      throw error;
+    }
+  }
+);
 
 module.exports = router;

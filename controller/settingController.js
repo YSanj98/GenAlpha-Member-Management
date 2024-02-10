@@ -8,10 +8,8 @@ const isAuthenticated = require("../middleware/auth.js");
 //change password api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/changePassword", isAuthenticated, async (req, res) => {
   try {
-    const currentPassword = req.body.currentPassword;
-    const newPassword = req.body.newPassword;
-
-    console.log(currentPassword, newPassword);
+    const { currentPassword, newPassword } = req.body;
+    console.log(req.body);
 
     const data = await User.findById(req.user.id).select("+password");
 
@@ -21,29 +19,22 @@ router.post("/changePassword", isAuthenticated, async (req, res) => {
         .json({ status: "error", error: "User not found" });
     }
 
-    const isPasswordMatch = await bcrypt.compare(
-      currentPassword,
-      data.password
-    );
+    const isPasswordMatch = await bcrypt.compare(currentPassword, data.password);
 
     if (!isPasswordMatch) {
       return res
         .status(401)
-        .json({ status: "error", error: "Invalid username or password" });
+        .json({ status: "error", error: "Invalid  password" });
     }
 
     const hashPassword = await bcrypt.hash(newPassword, 12);
 
-    await User.updateOne(
-      { _id: req.user.id },
-      {
-        $set: {
-          password: hashPassword,
-        },
-      }
-    );
+    await User.updateOne({ _id: req.user.id }, { password: hashPassword });
 
-    res.json({ status: "ok" });
+    res.status(200).json({
+      status: "ok",
+      message: "Password changed successfully",
+    });
   } catch (error) {
     res.status(400).json({ status: "error", error: "Server error" });
     console.log(error);
@@ -83,4 +74,5 @@ router.post("/deleteAccount", isAuthenticated, async (req, res) => {
     console.log(error);
   }
 });
+
 module.exports = router;

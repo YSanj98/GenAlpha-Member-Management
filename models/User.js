@@ -58,8 +58,8 @@ const userSchema = new schema(
         },
         portfolioLink: {
           type: String,
-        }, 
-      }
+        },
+      },
     ],
     socialMedia: [
       {
@@ -69,7 +69,7 @@ const userSchema = new schema(
         linkedinLink: {
           type: String,
         },
-      }
+      },
     ],
     academicDetails: [
       {
@@ -115,19 +115,20 @@ const userSchema = new schema(
         },
       },
     ],
-
+    profilePicture: [
+      {
+        name: {
+          type: String,
+        },
+        img: {
+          url: {
+            type: String,
+          },
+        },
+      },
+    ],
   },
   { timestamps: true }
 );
-
-userSchema.methods.generatePasswordResetToken = function () {
-  const resetToken = crypto.randomBytes(20).toString("hex");
-  this.passwordResetToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
-  this.passwordResetExpire = Date.now() + 10 * (30 * 1000);
-  return resetToken;
-};
 
 module.exports = mongoose.model("User", userSchema);
