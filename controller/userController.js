@@ -12,17 +12,18 @@ const generateOTP = require("../utils/generateOTP.js");
 const otpStore = {};
 
 //user register api endpoint---------------------------------------------------------------------------------------------------------------------------
-router.post("/register", async (req, res, next) => {
+router.post("/register", async (req, res) => {
   //data from frontend when user registers
   const { firstName, lastName, username, email, password, phoneNumber } =
     req.body; //destructuring
+    console.log(req.body);
 
-  if (!username || typeof username !== "string") {
-    return res.json({ status: "error", error: "Invalid username" });
+  if (username==='' || typeof username !== "string") {
+    return res.json({ status: "error", error: "username empty or invalid" });
   }
 
-  if (!email || typeof email !== "string") {
-    return res.json({ status: "error", error: "Invalid email" });
+  if (email==='' || typeof email !== "string") {
+    return res.json({ status: "error", error: "email empty or invalid" });
   }
 
   try {
@@ -37,6 +38,7 @@ router.post("/register", async (req, res, next) => {
       password: hashPassword,
       phoneNumber,
     });
+    res.json({ status: "ok" , message: "User created successfully"});
     console.log("User created successfully: ", response);
   } catch (error) {
     if (error.code === 11000) {
@@ -46,7 +48,7 @@ router.post("/register", async (req, res, next) => {
     }
     throw error;
   }
-  res.json({ status: "ok" });
+
 });
 
 //user login api endpoint---------------------------------------------------------------------------------------------------------------------------
@@ -145,7 +147,7 @@ router.post("/resetPassword", async (req, res) => {
         message: "Password reset successfully",
       });
     } catch (error) {
-      return res.status(500).json({ status: "Failed", message: "Internal Server Error" });
+      return res.status(500).json({ status: "Failed", message: "Internal Server Error", error: error.message });
     }
   } else {
     // Invalid OTP

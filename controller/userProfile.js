@@ -16,6 +16,16 @@ router.get("/getUser", isAuthenticated, async (req, res) => {
   }
 });
 
+router.get("/getUserImage", isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("profilePicture");
+    res.json(user);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server error");
+  }
+});
+
 router.post("/personalDetails", isAuthenticated, async (req, res) => {
   const {
     title,
@@ -182,12 +192,7 @@ router.post(
         { _id: req.user.id },
         {
           $set: {
-            profilePicture: {
-              name: req.body.name,
-              img: {
-                url: fileUrl,
-              },
-            },
+            profilePicture: fileUrl
           },
         }
       );
