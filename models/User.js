@@ -115,18 +115,9 @@ const userSchema = new schema(
         },
       },
     ],
-    profilePicture: [
-      {
-        name: {
-          type: String,
-        },
-        img: {
-          url: {
-            type: String,
-          },
-        },
-      },
-    ],
+    profilePicture: {
+      type: String,
+    },
   },
   { timestamps: true }
 );
