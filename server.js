@@ -1,14 +1,17 @@
 const app = require("./app");
 const connectDb = require("./database/database");
+require('dotenv').config();
+
 
 if (process.env.NODE_ENV == "production") {
-  require("dotenv").config({ path: path.join(__dirname, "config", ".env") }); 
+  require("dotenv").config({ path: path.join(__dirname, "config", ".env") });
 }
 
 connectDb();
 
 const server = app.listen(process.env.PORT, () => {
   console.log(`App running on http://localhost:${process.env.PORT}`);
+
 });
 
 process.on("uncaughtException", (err) => {
