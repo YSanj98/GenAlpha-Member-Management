@@ -11,7 +11,6 @@ router.get("/members", async (req, res) => {
     const userCount = await User.countDocuments();
     res.json({ status: "ok", members: userCount });
   } catch (error) {
-    console.log(error);
     res.status(400).json({ status: "error", error: "Server error" });
 
   }
