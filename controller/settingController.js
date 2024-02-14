@@ -9,7 +9,6 @@ const isAuthenticated = require("../middleware/auth.js");
 router.post("/changePassword", isAuthenticated, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    console.log(req.body);
 
     const data = await User.findById(req.user.id).select("+password");
 
@@ -37,7 +36,6 @@ router.post("/changePassword", isAuthenticated, async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({ status: "error", error: "Server error" });
-    console.log(error);
   }
 });
 
@@ -71,7 +69,6 @@ router.post("/deleteAccount", isAuthenticated, async (req, res) => {
   
   } catch (error) {
     res.status(400).json({ status: "error", error: "Server error" });
-    console.log(error);
   }
 });
 

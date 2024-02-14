@@ -36,6 +36,9 @@ const userSchema = new schema(
     passwordResetExpire: {
       type: Date,
     },
+    profilePicture: {
+      type: String,
+    },
     personalDetails: [
       {
         title: {
@@ -57,16 +60,6 @@ const userSchema = new schema(
           type: String,
         },
         portfolioLink: {
-          type: String,
-        },
-      },
-    ],
-    socialMedia: [
-      {
-        portfolioLink: {
-          type: String,
-        },
-        linkedinLink: {
           type: String,
         },
       },
@@ -115,9 +108,23 @@ const userSchema = new schema(
         },
       },
     ],
-    profilePicture: {
-      type: String,
-    },
+    socialMedia: [
+      {
+        websiteLink: {
+          type: String,
+        },
+        linkedinLink: {
+          type: String,
+        },
+      },
+    ],
+    fieldOfInterest: [
+      {
+        interest: {
+          type: String,
+        },
+      }
+    ]
   },
   { timestamps: true }
 );

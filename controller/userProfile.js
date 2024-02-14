@@ -11,7 +11,6 @@ router.get("/getUser", isAuthenticated, async (req, res) => {
     const user = await User.findById(req.user.id).select("-password");
     res.json(user);
   } catch (err) {
-    console.log(err);
     res.status(500).send("Server error");
   }
 });
@@ -21,7 +20,24 @@ router.get("/getUserImage", isAuthenticated, async (req, res) => {
     const user = await User.findById(req.user.id).select("profilePicture");
     res.json(user);
   } catch (err) {
-    console.log(err);
+    res.status(500).send("Server error");
+  }
+});
+
+router.get("/getInterest", isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("fieldOfInterest");
+    res.json(user);
+  } catch (err) {
+    res.status(500).send("Server error");
+  }
+});
+
+router.get("/getSocialLinks", isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("socialMedia");
+    res.json(user);
+  } catch (err) {
     res.status(500).send("Server error");
   }
 });
@@ -56,7 +72,7 @@ router.post("/personalDetails", isAuthenticated, async (req, res) => {
         },
       }
     );
-    console.log("Details added successfully: ", response);
+
     res
       .status(200)
       .json({ status: "ok", message: "Details added successfully" });
@@ -90,7 +106,7 @@ router.post("/academicDetails", isAuthenticated, async (req, res) => {
         },
       }
     );
-    console.log("Details added successfully: ", response);
+    
     res
       .status(200)
       .json({ status: "ok", message: "Details added successfully" });
@@ -134,7 +150,7 @@ router.post("/professionalDetails", isAuthenticated, async (req, res) => {
         },
       }
     );
-    console.log("Professional details added successfully: ", response);
+
     res.status(200).json({
       status: "ok",
       message: "Professional details added successfully",
@@ -150,7 +166,7 @@ router.post("/professionalDetails", isAuthenticated, async (req, res) => {
 });
 
 router.post("/SocialMedia", isAuthenticated, async (req, res) => {
-  const { linkedinLink, portfolioLink } = req.body;
+  const { linkedinLink, websiteLink } = req.body;
 
   const user = await User.findById(req.user.id);
 
@@ -159,15 +175,47 @@ router.post("/SocialMedia", isAuthenticated, async (req, res) => {
       { _id: req.user.id },
       {
         $set: {
-          linkedinLink,
-          portfolioLink,
+          socialMedia: {
+            linkedinLink,
+            websiteLink,
+          },
         },
       }
     );
-    console.log("Details added successfully: ", response);
+
     res
       .status(200)
       .json({ status: "ok", message: "Details added successfully" });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res
+        .status(409)
+        .json({ status: "error", error: "Username already in use" });
+    }
+    throw error;
+  }
+});
+
+router.post("/fieldOfInterest", isAuthenticated, async (req, res) => {
+  const { interest } = req.body;
+
+  const user = await User.findById(req.user.id);
+
+  try {
+    const response = await User.updateOne(
+      { _id: req.user.id },
+      {
+        $push: {
+          fieldOfInterest: {
+            interest,
+          },
+        },
+      }
+    );
+
+    res
+      .status(200)
+      .json({ status: "ok", message: "Interest added successfully" });
   } catch (error) {
     if (error.code === 11000) {
       return res
@@ -192,11 +240,11 @@ router.post(
         { _id: req.user.id },
         {
           $set: {
-            profilePicture: fileUrl
+            profilePicture: fileUrl,
           },
         }
       );
-      console.log("Photo uploaded successfully: ", response);
+
       res
         .status(200)
         .json({ status: "ok", message: "Photo uploaded successfully" });

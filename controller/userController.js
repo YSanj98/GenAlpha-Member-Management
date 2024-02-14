@@ -13,21 +13,23 @@ const otpStore = {};
 
 //user register api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/register", async (req, res) => {
-  //data from frontend when user registers
-  const { firstName, lastName, username, email, password, phoneNumber } =
-    req.body; //destructuring
-    console.log(req.body);
+  // Data from frontend when user registers
+  const { firstName, lastName, username, email, password, phoneNumber } = req.body; // Destructuring
 
-  if (username==='' || typeof username !== "string") {
-    return res.json({ status: "error", error: "username empty or invalid" });
+  // Check if email is empty or not a string
+  if (!email || typeof email !== "string") {
+    return res.json({ status: "error", error: "Email empty or invalid" });
   }
 
-  if (email==='' || typeof email !== "string") {
-    return res.json({ status: "error", error: "email empty or invalid" });
+  // Validate email format
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.json({ status: "error", error: "Invalid email format" });
   }
 
+  // Rest of your validation and user creation logic remains unchanged
   try {
-    // password encryption for security
+    // Password encryption for security
     const hashPassword = await bcrypt.hash(password, 12);
 
     const response = await User.create({
@@ -38,32 +40,25 @@ router.post("/register", async (req, res) => {
       password: hashPassword,
       phoneNumber,
     });
-    res.json({ status: "ok" , message: "User created successfully"});
-    console.log("User created successfully: ", response);
+    res.json({ status: "ok", message: "User created successfully" });
   } catch (error) {
     if (error.code === 11000) {
-      return res
-        .status(409)
-        .json({ status: "error", error: "Username already in use" });
+      return res.status(409).json({ status: "error", error: "Username already in use" });
     }
     throw error;
   }
-
 });
 
 //user login api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
   const user = await User.findOne({ username }).select("+password");
-  console.log("login user details :-" + user);
 
   if (!user) {
     return res
       .status(401)
-      .json({ status: "error", error: "Invalid username or password" });
-  }
-
-  if (await bcrypt.compare(password, user.password)) {
+      .json({ status: "error" , error: "User Not Found" });
+  }else if (user && await bcrypt.compare(password, user.password)) {
     //compare password with hashed password
     const token = jwt.sign(
       {
@@ -74,7 +69,7 @@ router.post("/login", async (req, res) => {
     );
     return res.json({ status: "ok", token: token });
   } else {
-    return res.json({ status: "error", error: "Invalid username or password" });
+    return res.json({ status: "error", error: "Invalid password" });
   }
 });
 
@@ -93,7 +88,7 @@ router.post("/forgotPassword", async (req, res) => {
     otp, expireAt: Date.now() +  60*2000,
     email: user.email
   };
-  console.log(otpStore);
+
   //send email to user and provide link to reset password. forgot passwprd means user need to reset the password
   const emailBody = `Hi ${user.firstName}, 
   Your OTP is ${otp}`;
@@ -117,11 +112,9 @@ router.post("/forgotPassword", async (req, res) => {
 //reset password api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/resetPassword", async (req, res) => {
   const { otp, password } = req.body;
-  console.log(otp, password);
 
   // Verify OTP
   const storedOTP = Object.values(otpStore).find((stored) => stored.otp === otp);
-  console.log(storedOTP)
 
   if (storedOTP && storedOTP.expireAt > Date.now()) {
     try {

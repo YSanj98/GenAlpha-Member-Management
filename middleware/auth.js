@@ -12,7 +12,6 @@ const isAuthenticated = async (req, res, next) => {
         next();
     }
     catch (err) {
-        console.log(err);
         return res.status(401).json({ status: "error", error: "Authentication error" });
     }
 };
