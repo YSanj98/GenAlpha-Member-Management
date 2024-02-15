@@ -10,7 +10,7 @@ if (process.env.NODE_ENV == "production") {
 connectDb();
 
 const server = app.listen(process.env.PORT, () => {
-  console.log(`App running on http://localhost:${process.env.PORT}`);
+  console.log(`App running on https://generationalpha.info:${process.env.PORT}`);
 
 });
 
