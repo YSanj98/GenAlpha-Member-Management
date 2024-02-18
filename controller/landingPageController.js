@@ -3,7 +3,6 @@ const router = express.Router();
 const bcrypt = require("bcryptjs");
 
 const User = require("../models/User.js");
-const isAuthenticated = require("../middleware/auth.js");
 
 //get user count api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.get("/members", async (req, res) => {
