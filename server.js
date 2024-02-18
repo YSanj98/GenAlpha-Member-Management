@@ -3,14 +3,14 @@ const connectDb = require("./database/database");
 require('dotenv').config();
 
 
-if (process.env.NODE_ENV == "production") {
-  require("dotenv").config({ path: path.join(__dirname, "config", ".env") });
-}
+// if (process.env.NODE_ENV == "production") {
+//   require("dotenv").config({ path: path.join(__dirname, "config", ".env") });
+// }
 
 connectDb();
 
 const server = app.listen(process.env.PORT, () => {
-  console.log(`App running on https://generationalpha.info:${process.env.PORT}`);
+  console.log(`App running on ${process.env.PORT}`);
 
 });
 
