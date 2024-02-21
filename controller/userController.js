@@ -13,23 +13,29 @@ const otpStore = {};
 
 //user register api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/register", async (req, res) => {
-  // Data from frontend when user registers
-  const { firstName, lastName, username, email, password, phoneNumber } = req.body; // Destructuring
+  const { firstName, lastName, username, email, password, phoneNumber, confirmPassword } = req.body;
 
-  // Check if email is empty or not a string
   if (!email || typeof email !== "string") {
     return res.json({ status: "error", error: "Email empty or invalid" });
   }
 
-  // Validate email format
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     return res.json({ status: "error", error: "Invalid email format" });
   }
 
-  // Rest of your validation and user creation logic remains unchanged
+  // Check if password and confirmPassword are the same
+  if (password !== confirmPassword) {
+    return res.json({ status: "error", error: "Passwords do not match" });
+  }
+
   try {
-    // Password encryption for security
+    // Check if email or username already exists
+    const existingUser = await User.findOne({ $or: [{ email }, { username }] });
+    if (existingUser) {
+      return res.json({ status: "error", error: "Email or username already registered" });
+    }
+
     const hashPassword = await bcrypt.hash(password, 12);
 
     const response = await User.create({
@@ -42,9 +48,6 @@ router.post("/register", async (req, res) => {
     });
     res.json({ status: "ok", message: "User created successfully" });
   } catch (error) {
-    if (error.code === 11000) {
-      return res.status(409).json({ status: "error", error: "Username already in use" });
-    }
     throw error;
   }
 });
@@ -56,7 +59,6 @@ router.post("/login", async (req, res) => {
 
   if (!user) {
     return res
-      .status(401)
       .json({ status: "error" , error: "User Not Found" });
   }else if (user && await bcrypt.compare(password, user.password)) {
     //compare password with hashed password
@@ -65,7 +67,8 @@ router.post("/login", async (req, res) => {
         id: user._id,
         username: user.username,
       },
-      process.env.JWT_SECRET
+      process.env.JWT_SECRET,
+
     );
     return res.json({ status: "ok", token: token });
   } else {
