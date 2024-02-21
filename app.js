@@ -15,14 +15,16 @@ const landing = require("./controller/landingPageController");
 const app = express();
 
 app.use(
-  cors({
-    origin: "https://generationalpha.info",
-    methods: "GET,POST,PUT,DELETE",
-    credential: true,
-  })
+  cors(
+    {
+      origin: "http://localhost:3000",
+      methods: "GET,POST,PUT,DELETE",
+      credentials: true,
+    }
+  )
 );
-app.use(express.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json({limit:'20mb'}));
+app.use(bodyParser.urlencoded({ limit:'20mb',  extended: true }));
 app.use("/", express.static(path.join(__dirname, "public")));
 app.use(cookieSession({ name: "session", maxAge: 24 * 60 * 60 * 1000, keys:["generationalpha"] }));
 app.use(passport.initialize());

@@ -4,8 +4,10 @@ const fs = require("fs");
 const path = require("path");
 const User = require("../models/User.js");
 const isAuthenticated = require("../middleware/auth.js");
-const { upload } = require("../utils/multer.js");
+const cloudinary = require("cloudinary");
 
+
+//get user api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.get("/getUser", isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
@@ -15,6 +17,7 @@ router.get("/getUser", isAuthenticated, async (req, res) => {
   }
 });
 
+//get profile picture api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.get("/getUserImage", isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("profilePicture");
@@ -24,6 +27,7 @@ router.get("/getUserImage", isAuthenticated, async (req, res) => {
   }
 });
 
+//get interest api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.get("/getInterest", isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("fieldOfInterest");
@@ -33,6 +37,7 @@ router.get("/getInterest", isAuthenticated, async (req, res) => {
   }
 });
 
+//get social links api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.get("/getSocialLinks", isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("socialMedia");
@@ -42,6 +47,7 @@ router.get("/getSocialLinks", isAuthenticated, async (req, res) => {
   }
 });
 
+//add personal details api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/personalDetails", isAuthenticated, async (req, res) => {
   const {
     title,
@@ -86,6 +92,7 @@ router.post("/personalDetails", isAuthenticated, async (req, res) => {
   }
 });
 
+//add academic details api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/academicDetails", isAuthenticated, async (req, res) => {
   const { institute, degree, startDate, endDate, grade } = req.body;
 
@@ -120,6 +127,7 @@ router.post("/academicDetails", isAuthenticated, async (req, res) => {
   }
 });
 
+//add professional details api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/professionalDetails", isAuthenticated, async (req, res) => {
   const {
     position,
@@ -165,6 +173,7 @@ router.post("/professionalDetails", isAuthenticated, async (req, res) => {
   }
 });
 
+//add social media api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/SocialMedia", isAuthenticated, async (req, res) => {
   const { linkedinLink, websiteLink } = req.body;
 
@@ -196,6 +205,7 @@ router.post("/SocialMedia", isAuthenticated, async (req, res) => {
   }
 });
 
+//add field of interest api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/fieldOfInterest", isAuthenticated, async (req, res) => {
   const { interest } = req.body;
 
@@ -226,6 +236,7 @@ router.post("/fieldOfInterest", isAuthenticated, async (req, res) => {
   }
 });
 
+//edit academic details api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/editAcademic/:id", isAuthenticated, async (req, res) => {
   const { institute, degree, startDate, endDate, grade } = req.body;
 
@@ -253,8 +264,7 @@ router.post("/editAcademic/:id", isAuthenticated, async (req, res) => {
     res
       .status(200)
       .json({ status: "ok", message: "Academic updated successfully" });
-
-  }catch (error) {
+  } catch (error) {
     if (error.code === 11000) {
       return res
         .status(409)
@@ -262,9 +272,9 @@ router.post("/editAcademic/:id", isAuthenticated, async (req, res) => {
     }
     throw error;
   }
-
 });
 
+//delete academic api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.delete("/deleteAcademic/:id", isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -292,6 +302,7 @@ router.delete("/deleteAcademic/:id", isAuthenticated, async (req, res) => {
   }
 });
 
+// delete professional qualification api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.delete("/deleteProfessional/:id", isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -313,12 +324,16 @@ router.delete("/deleteProfessional/:id", isAuthenticated, async (req, res) => {
     await user.save();
     res
       .status(200)
-      .json({ status: "ok", message: "professional qualification deleted successfully" });
+      .json({
+        status: "ok",
+        message: "professional qualification deleted successfully",
+      });
   } catch (error) {
     res.status(500).json({ status: "error", error: "Server error" });
   }
 });
 
+// delete interest api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.delete("/deleteInterest/:id", isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -348,38 +363,37 @@ router.delete("/deleteInterest/:id", isAuthenticated, async (req, res) => {
     res.status(500).json({ status: "error", error: "Server error" });
   }
 });
+//profile picture upload api endpoint---------------------------------------------------------------------------------------------------------------------------
+router.post("/photoUpload", isAuthenticated, async (req, res) => {
+  try {
+    const fileStr = req.body.data;
 
-router.post(
-  "/photoUpload",
-  upload.single("file"),
-  isAuthenticated,
-  async (req, res) => {
     const user = await User.findById(req.user.id);
-    try {
-      const filename = req.file.filename;
-      const fileUrl = path.join(filename);
+    const currentProfilePictureUrl = user.profilePicture;
 
-      const response = await User.updateOne(
-        { _id: req.user.id },
-        {
-          $set: {
-            profilePicture: fileUrl,
-          },
-        }
-      );
-
-      res
-        .status(200)
-        .json({ status: "ok", message: "Photo uploaded successfully" });
-    } catch (error) {
-      if (error.code === 11000) {
-        return res
-          .status(409)
-          .json({ status: "error", error: "Username already in use" });
-      }
-      throw error;
+    let publicId;
+    if (currentProfilePictureUrl) {
+      publicId = currentProfilePictureUrl.split('/').pop().split('.')[0];
     }
+
+    const uploadResponse = await cloudinary.v2.uploader.upload(fileStr, {
+      folder: "generationalpha",
+      overwrite: true,
+      public_id: publicId 
+    });
+
+    user.profilePicture = uploadResponse.url;
+    await user.save();
+
+    console.log(uploadResponse);
+    console.log(uploadResponse.url);
+
+    res.json({ status: "ok", message: "Image uploaded successfully" });
+  } catch (error) {
+    console.error("Error uploading photo:", error);
+    res.status(500).json({ status: "error", error: "Something Went Wrong" });
   }
-);
+});
+
 
 module.exports = router;
