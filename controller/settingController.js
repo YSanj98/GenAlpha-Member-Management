@@ -13,12 +13,13 @@ router.post("/changePassword", isAuthenticated, async (req, res) => {
     const data = await User.findById(req.user.id).select("+password");
 
     if (!data) {
-      return res
-        .status(404)
-        .json({ status: "error", error: "User not found" });
+      return res.status(404).json({ status: "error", error: "User not found" });
     }
 
-    const isPasswordMatch = await bcrypt.compare(currentPassword, data.password);
+    const isPasswordMatch = await bcrypt.compare(
+      currentPassword,
+      data.password
+    );
 
     if (!isPasswordMatch) {
       return res
@@ -43,32 +44,22 @@ router.post("/changePassword", isAuthenticated, async (req, res) => {
 router.post("/deleteAccount", isAuthenticated, async (req, res) => {
   try {
     const password = req.body.password;
-
     const data = await User.findById(req.user.id).select("+password");
-
-    if (!data) {
-      return res
-        .status(404)
-        .json({ status: "error", error: "User not found" });
-    }
-
     const isPasswordMatch = await bcrypt.compare(password, data.password);
 
     if (!isPasswordMatch) {
       return res
-        .status(401)
         .json({ status: "error", error: "Invalid  password" });
-    }
+    } else {
+      await User.deleteOne({ _id: req.user.id });
 
-    await User.deleteOne({ _id: req.user.id });
-    
-    res.status(200).json({
-      status: "ok",
-      message: "Account deleted successfully",
-    });
-  
+      res.status(200).json({
+        status: "ok",
+        message: "Account deleted successfully",
+      });
+    }
   } catch (error) {
-    res.status(400).json({ status: "error", error: "Server error" });
+    res.json({ status: "error", error: "Server error" });
   }
 });
 
