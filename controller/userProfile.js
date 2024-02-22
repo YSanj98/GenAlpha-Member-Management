@@ -363,6 +363,7 @@ router.delete("/deleteInterest/:id", isAuthenticated, async (req, res) => {
     res.status(500).json({ status: "error", error: "Server error" });
   }
 });
+
 //profile picture upload api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/photoUpload", isAuthenticated, async (req, res) => {
   try {
@@ -391,7 +392,33 @@ router.post("/photoUpload", isAuthenticated, async (req, res) => {
     res.json({ status: "ok", message: "Image uploaded successfully" });
   } catch (error) {
     console.error("Error uploading photo:", error);
-    res.status(500).json({ status: "error", error: "Something Went Wrong" });
+    res.json({ status: "error", error: "Something Went Wrong" });
+  }
+});
+
+//profile picture delete api endpoint---------------------------------------------------------------------------------------------------------------------------    
+router.delete("/deleteProfilePicture", isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const currentProfilePictureUrl = user.profilePicture;
+
+    let publicId;
+
+    if (currentProfilePictureUrl) {
+      publicId = currentProfilePictureUrl.split('/').pop().split('.')[0];
+    }
+
+    if (publicId) {
+      await cloudinary.v2.uploader.destroy(publicId);
+    }
+
+    user.profilePicture = null;
+    await user.save();
+
+    res.json({ status: "ok", message: "Image deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting photo:", error);
+    res.json({ status: "error", error: "Something Went Wrong" });
   }
 });
 
