@@ -17,11 +17,7 @@ const app = express();
 app.use(
   cors(
     {
-      origin: "http://localhost:3000",
-      credentials: true,
-    },
-    {
-      origin: "https://generationalpha.info",
+      origin: process.env.CLIENT_URL,
       credentials: true,
       methods: "GET,,PUT,PATCH,POST,DELETE",
     }
