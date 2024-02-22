@@ -1,10 +1,6 @@
 const app = require("./app");
 const connectDb = require("./database/database");
 
-if (process.env.NODE_ENV == "production") {
-  require("dotenv").config({ path: path.join(__dirname, "config", ".env") }); 
-}
-
 connectDb();
 
 const server = app.listen(process.env.PORT, () => {
