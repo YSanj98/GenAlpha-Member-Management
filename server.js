@@ -1,5 +1,6 @@
 const app = require("./app");
 const connectDb = require("./database/database");
+const cloudinary = require("cloudinary").v2;
 
 connectDb();
 
