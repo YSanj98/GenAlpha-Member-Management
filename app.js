@@ -17,12 +17,17 @@ const app = express();
 app.use(
   cors(
     {
-      origin: " https://generationalpha.info/",
-      methods: "GET,POST,PUT,DELETE",
+      origin: "http://localhost:3000",
       credentials: true,
+    },
+    {
+      origin: "https://generationalpha.info",
+      credentials: true,
+      methods: "GET,,PUT,PATCH,POST,DELETE",
     }
   )
 );
+
 app.use(express.json({limit:'20mb'}));
 app.use(bodyParser.urlencoded({ limit:'20mb',  extended: true }));
 app.use("/", express.static(path.join(__dirname, "public")));
