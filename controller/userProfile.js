@@ -380,7 +380,8 @@ router.post("/photoUpload", isAuthenticated, async (req, res) => {
     const uploadResponse = await cloudinary.v2.uploader.upload(fileStr, {
       folder: "generationalpha",
       overwrite: true,
-      public_id: publicId 
+      public_id: publicId ,
+      secure: true
     });
 
     user.profilePicture = uploadResponse.url;
