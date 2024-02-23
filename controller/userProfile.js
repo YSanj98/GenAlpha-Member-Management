@@ -378,7 +378,7 @@ router.post("/photoUpload", isAuthenticated, async (req, res) => {
     }
 
     const uploadResponse = await cloudinary.v2.uploader.upload(fileStr, {
-      folder: "generationalpha",
+      upload_preset: "generationalpha",
       overwrite: true,
       public_id: publicId ,
       secure: true
@@ -393,7 +393,7 @@ router.post("/photoUpload", isAuthenticated, async (req, res) => {
     res.json({ status: "ok", message: "Image uploaded successfully" });
   } catch (error) {
     console.error("Error uploading photo:", error);
-    res.json({ status: "error", error: "Something Went Wrong" });
+    res.json({ status: "error", error: error });
   }
 });
 
