@@ -24,6 +24,15 @@ router.post("/register", async (req, res) => {
     return res.json({ status: "error", error: "Invalid email format" });
   }
 
+    // Password validation using regex
+    const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.json({
+        status: "error",
+        error: "Invalid password format"
+      });
+    }
+
   // Check if password and confirmPassword are the same
   if (password !== confirmPassword) {
     return res.json({ status: "error", error: "Passwords do not match" });
