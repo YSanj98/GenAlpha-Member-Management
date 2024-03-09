@@ -64,7 +64,9 @@ router.post("/register", async (req, res) => {
 //user login api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  const user = await User.findOne({ username }).select("+password");
+  const user = await User.findOne(
+    { $or: [{ email: username }, { username: username }] }
+  ).select("+password");
 
   if (!user) {
     return res
