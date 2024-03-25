@@ -17,7 +17,7 @@ const app = express();
 app.use(
   cors(
     {
-      origin: "https://generationalpha.info",
+      origin: "https://generationalpha.info/",
       methods: "GET,POST,PUT,DELETE",
       credential: true,
     }
