@@ -68,8 +68,11 @@ router.post("/login", async (req, res) => {
     { $or: [{ email: username }, { username: username }] }
   ).select("+password");
 
-  if (!user) {
-    return res
+  if(username && password === "") {
+    return res.json({ status: "error", error: "no data" });
+  }
+
+  if (!user) {    return res
       .json({ status: "error" , error: "User Not Found" });
   }else if (user && await bcrypt.compare(password, user.password)) {
     //compare password with hashed password

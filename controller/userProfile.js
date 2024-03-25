@@ -47,6 +47,16 @@ router.get("/getSocialLinks", isAuthenticated, async (req, res) => {
   }
 });
 
+// router.get("/getAcademicDetails", isAuthenticated, async (req, res) => {
+//   try {
+//     const user = await User.findById(req.user.id).select("academicDetails");
+//     res.json(user);
+//   } catch (err) {
+//     res.status(500).send("Server error");
+//   }
+// }
+// );
+
 //add personal details api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/personalDetails", isAuthenticated, async (req, res) => {
   const {
@@ -386,12 +396,11 @@ router.post(
         .status(200)
         .json({ status: "ok", message: "Photo uploaded successfully" });
     } catch (error) {
-      if (error.code === 11000) {
+      if (error.code === 413) {
         return res
-          .status(409)
-          .json({ status: "error", error: "Username already in use" });
+          .json({ status: "error", error: "Payload too large" });
       }
-      throw error;
+      return res.json({ status: "error", error: "Server error" });
     }
   }
 );
