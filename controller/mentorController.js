@@ -56,7 +56,6 @@ const {decision} = req.body;
 
   if(decision === 'approved'){
     user.isMentor = true;
-    user.isMentor.status = 'approved';
   }
 
   try {
@@ -82,9 +81,7 @@ console.log(decision);
   }
 
   if(decision === 'rejected'){
-    
     user.isMentor = false;
-    user.isMentor.status = 'rejected';
   }
 
   try {
