@@ -70,4 +70,33 @@ const {decision} = req.body;
   }
 });
 
+router.post("/mentor/rejected/:userId", async (req, res) => {
+  const user = await User.findById(req.params.userId);
+
+const {decision} = req.body;
+console.log(decision);
+
+
+  if (!user) {
+    return res.json({ status: "error", error: "Invalid user" });
+  }
+
+  if(decision === 'rejected'){
+    
+    user.isMentor = false;
+    user.isMentor.status = 'rejected';
+  }
+
+  try {
+    await user.save();
+    res.status(201).json({
+      success: true,
+      message: `Mentor application of ${user.firstName} ${user.lastName} was rejected`,
+    });
+  } catch (error) {
+    return res.json({ status: "Failed", error: error.message });
+  }
+});
+
+
 module.exports = router;
