@@ -4,8 +4,19 @@ const fs = require("fs");
 const path = require("path");
 const User = require("../models/User.js");
 const isAuthenticated = require("../middleware/auth.js");
-const cloudinary = require("cloudinary");
 const { upload } = require("../utils/multer.js");
+const mongoose = require('mongoose'); 
+
+
+// Function to format date to YYYY/MM/DD format
+function formatDate(date) {
+  const formattedDate = new Date(date);
+  const year = formattedDate.getFullYear();
+  const month = String(formattedDate.getMonth() + 1).padStart(2, "0");
+  const day = String(formattedDate.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 
 //get user api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.get("/getUser", isAuthenticated, async (req, res) => {
@@ -47,15 +58,56 @@ router.get("/getSocialLinks", isAuthenticated, async (req, res) => {
   }
 });
 
-// router.get("/getAcademicDetails", isAuthenticated, async (req, res) => {
-//   try {
-//     const user = await User.findById(req.user.id).select("academicDetails");
-//     res.json(user);
-//   } catch (err) {
-//     res.status(500).send("Server error");
-//   }
-// }
-// );
+//get academic details for edit api endpoint---------------------------------------------------------------------------------------------------------------------------
+router.get("/getAcademicDetails/:id", isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("academicDetails");
+    // Directly using the _id property for comparison
+    const academic = user.academicDetails.find(
+      (academicDetail) => academicDetail._id.toString() === req.params.id
+    );
+    if (academic) {
+      // Format start date and end date to YYYY/MM/DD format
+      const formattedAcademic = {
+        ...academic._doc,
+        startDate: formatDate(academic.startDate),
+        endDate: formatDate(academic.endDate)
+      };
+      res.json({ academic: formattedAcademic }); // Send back the found academic detail with formatted dates
+    } else {
+      res.status(404).send("Academic detail not found");
+    }
+  } catch (err) {
+    console.error(err); // Logging the actual error can help in debugging
+    res.status(500).send("Server error");
+  }
+});
+
+//get professional details for edit api endpoint---------------------------------------------------------------------------------------------------------------------------
+router.get("/getProfessionalDetails/:id", isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("professionalDetails");
+    // Directly using the _id property for comparison
+    const professional = user.professionalDetails.find(
+      (professionalDetails) => professionalDetails._id.toString() === req.params.id
+    );
+    if (professional) {
+      // Format start date and end date to YYYY/MM/DD format
+      const formattedProfessional = {
+        ...professional._doc,
+        startDate: formatDate(professional.startDate),
+        endDate: formatDate(professional.endDate)
+      };
+      res.json({ professional: formattedProfessional }); // Send back the found professional detail with formatted dates
+    } else {
+      res.status(404).send("Professional detail not found");
+    }
+  } catch (err) {
+    console.error(err); // Logging the actual error can help in debugging
+    res.status(500).send("Server error");
+  }
+});
+
 
 //add personal details api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/personalDetails", isAuthenticated, async (req, res) => {
@@ -137,6 +189,44 @@ router.post("/academicDetails", isAuthenticated, async (req, res) => {
   }
 });
 
+//
+router.post("/editedAcademicDetails/:id", isAuthenticated, async (req, res) => {
+  const { institute, degree, startDate, endDate, grade } = req.body;
+  console.log(req.params.id)
+
+  const user = await User.findById(req.user.id);
+
+  try {
+    const response = await User.updateOne(
+      { _id: req.user.id },
+      
+      
+      {
+        $set: {
+          academicDetails: {
+            institute,
+            degree,
+            startDate,
+            endDate,
+            grade,
+          },
+        },
+      }
+    );
+
+    res
+      .status(200)
+      .json({ status: "ok", message: "Details added successfully" });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res
+        .status(409)
+        .json({ status: "error", error: "Username already in use" });
+    }
+    throw error;
+  }
+});
+
 //add professional details api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/professionalDetails", isAuthenticated, async (req, res) => {
   const {
@@ -156,6 +246,51 @@ router.post("/professionalDetails", isAuthenticated, async (req, res) => {
       { _id: req.user.id },
       {
         $push: {
+          professionalDetails: {
+            position,
+            empType,
+            companyName,
+            locationType,
+            startDate,
+            endDate,
+            skills,
+          },
+        },
+      }
+    );
+
+    res.status(200).json({
+      status: "ok",
+      message: "Professional details added successfully",
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res
+        .status(409)
+        .json({ status: "error", error: "Username already in use" });
+    }
+    throw error;
+  }
+});
+
+router.post("/editedProfessionalDetails/:id", isAuthenticated, async (req, res) => {
+  const {
+    position,
+    empType,
+    companyName,
+    locationType,
+    startDate,
+    endDate,
+    skills,
+  } = req.body;
+
+  const user = await User.findById(req.user.id);
+
+  try {
+    const response = await User.updateOne(
+      { _id: req.user.id },
+      {
+        $set: {
           professionalDetails: {
             position,
             empType,
@@ -397,8 +532,7 @@ router.post(
         .json({ status: "ok", message: "Photo uploaded successfully" });
     } catch (error) {
       if (error.code === 413) {
-        return res
-          .json({ status: "error", error: "Payload too large" });
+        return res.json({ status: "error", error: "Payload too large" });
       }
       return res.json({ status: "error", error: "Server error" });
     }
@@ -418,8 +552,8 @@ router.delete("/deleteProfilePicture", isAuthenticated, async (req, res) => {
     }
 
     // Get the filename of the profile picture
-    const filename = path.join(__dirname, '..', 'public', user.profilePicture);
-    console.log(filename)
+    const filename = path.join(__dirname, "..", "public", user.profilePicture);
+    console.log(filename);
 
     // Delete the file from the filesystem
     fs.unlink(filename, async (err) => {
