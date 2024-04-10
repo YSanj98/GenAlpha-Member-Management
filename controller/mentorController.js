@@ -24,7 +24,7 @@ router.post("/applyMentor", isAuthenticated, async (req, res) => {
 
   click below link to approve or reject the application;
 
-  ${process.env.CLIENT_URL}/applyMentorReview/${user._id}
+  ${process.env.CLIENT_URL_TEST}/applyMentorReview/${user._id}
   `;
 
   try {
@@ -37,6 +37,33 @@ router.post("/applyMentor", isAuthenticated, async (req, res) => {
     res.status(201).json({
       success: true,
       message: `Check email of admin to review mentor application of ${user.firstName} ${user.lastName}`,
+    });
+  } catch (error) {
+    return res.json({ status: "Failed", error: error.message });
+  }
+});
+
+//save mentor on database
+router.post("/mentor/approved/:userId", async (req, res) => {
+  const user = await User.findById(req.params.userId);
+
+const {decision} = req.body;
+
+
+  if (!user) {
+    return res.json({ status: "error", error: "Invalid user" });
+  }
+
+  if(decision === 'approved'){
+    user.isMentor = true;
+    user.isMentor.status = 'approved';
+  }
+
+  try {
+    await user.save();
+    res.status(201).json({
+      success: true,
+      message: `User ${user.firstName} ${user.lastName} is now a mentor`,
     });
   } catch (error) {
     return res.json({ status: "Failed", error: error.message });
