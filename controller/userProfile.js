@@ -5,8 +5,7 @@ const path = require("path");
 const User = require("../models/User.js");
 const isAuthenticated = require("../middleware/auth.js");
 const { upload } = require("../utils/multer.js");
-const mongoose = require('mongoose'); 
-
+const mongoose = require("mongoose");
 
 // Function to format date to YYYY/MM/DD format
 function formatDate(date) {
@@ -16,7 +15,6 @@ function formatDate(date) {
   const day = String(formattedDate.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
-
 
 //get user api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.get("/getUser", isAuthenticated, async (req, res) => {
@@ -71,7 +69,7 @@ router.get("/getAcademicDetails/:id", isAuthenticated, async (req, res) => {
       const formattedAcademic = {
         ...academic._doc,
         startDate: formatDate(academic.startDate),
-        endDate: formatDate(academic.endDate)
+        endDate: formatDate(academic.endDate),
       };
       res.json({ academic: formattedAcademic }); // Send back the found academic detail with formatted dates
     } else {
@@ -89,14 +87,15 @@ router.get("/getProfessionalDetails/:id", isAuthenticated, async (req, res) => {
     const user = await User.findById(req.user.id).select("professionalDetails");
     // Directly using the _id property for comparison
     const professional = user.professionalDetails.find(
-      (professionalDetails) => professionalDetails._id.toString() === req.params.id
+      (professionalDetails) =>
+        professionalDetails._id.toString() === req.params.id
     );
     if (professional) {
       // Format start date and end date to YYYY/MM/DD format
       const formattedProfessional = {
         ...professional._doc,
         startDate: formatDate(professional.startDate),
-        endDate: formatDate(professional.endDate)
+        endDate: formatDate(professional.endDate),
       };
       res.json({ professional: formattedProfessional }); // Send back the found professional detail with formatted dates
     } else {
@@ -108,6 +107,39 @@ router.get("/getProfessionalDetails/:id", isAuthenticated, async (req, res) => {
   }
 });
 
+//get about api endpoint---------------------------------------------------------------------------------------------------------------------------
+router.get("/getAbout", isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    res.json({status: "ok" , about: user.about});
+  } catch (err) {
+    res.status(500).send("Server error");
+  }
+});
+
+//add about  api endpoint---------------------------------------------------------------------------------------------------------------------------
+router.post("/about", isAuthenticated, async (req, res) => {
+  const { about } = req.body;
+  console.log(about);
+
+  const user = await User.findById(req.user.id);
+  try {
+    await User.updateOne(
+      { _id: req.user.id },
+      {
+        $set: {
+          about,
+        },
+      }
+    );
+
+    res.json({ status: "ok", message: "About added successfully" });
+    console.log(user.about);
+  } catch (err) {
+    console.log(err);
+    res.json({ status: "error", error: "Server error" });
+  }
+});
 
 //add personal details api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/personalDetails", isAuthenticated, async (req, res) => {
@@ -192,15 +224,14 @@ router.post("/academicDetails", isAuthenticated, async (req, res) => {
 //
 router.post("/editedAcademicDetails/:id", isAuthenticated, async (req, res) => {
   const { institute, degree, startDate, endDate, grade } = req.body;
-  console.log(req.params.id)
+  console.log(req.params.id);
 
   const user = await User.findById(req.user.id);
 
   try {
     const response = await User.updateOne(
       { _id: req.user.id },
-      
-      
+
       {
         $set: {
           academicDetails: {
@@ -273,50 +304,54 @@ router.post("/professionalDetails", isAuthenticated, async (req, res) => {
   }
 });
 
-router.post("/editedProfessionalDetails/:id", isAuthenticated, async (req, res) => {
-  const {
-    position,
-    empType,
-    companyName,
-    locationType,
-    startDate,
-    endDate,
-    skills,
-  } = req.body;
+router.post(
+  "/editedProfessionalDetails/:id",
+  isAuthenticated,
+  async (req, res) => {
+    const {
+      position,
+      empType,
+      companyName,
+      locationType,
+      startDate,
+      endDate,
+      skills,
+    } = req.body;
 
-  const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id);
 
-  try {
-    const response = await User.updateOne(
-      { _id: req.user.id },
-      {
-        $set: {
-          professionalDetails: {
-            position,
-            empType,
-            companyName,
-            locationType,
-            startDate,
-            endDate,
-            skills,
+    try {
+      const response = await User.updateOne(
+        { _id: req.user.id },
+        {
+          $set: {
+            professionalDetails: {
+              position,
+              empType,
+              companyName,
+              locationType,
+              startDate,
+              endDate,
+              skills,
+            },
           },
-        },
-      }
-    );
+        }
+      );
 
-    res.status(200).json({
-      status: "ok",
-      message: "Professional details added successfully",
-    });
-  } catch (error) {
-    if (error.code === 11000) {
-      return res
-        .status(409)
-        .json({ status: "error", error: "Username already in use" });
+      res.status(200).json({
+        status: "ok",
+        message: "Professional details added successfully",
+      });
+    } catch (error) {
+      if (error.code === 11000) {
+        return res
+          .status(409)
+          .json({ status: "error", error: "Username already in use" });
+      }
+      throw error;
     }
-    throw error;
   }
-});
+);
 
 //add social media api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/SocialMedia", isAuthenticated, async (req, res) => {
