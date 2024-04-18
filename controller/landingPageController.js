@@ -8,9 +8,9 @@ const User = require("../models/User.js");
 router.get("/members", async (req, res) => {
   try {
     const userCount = await User.countDocuments();
-    res.json({ status: "ok", members: userCount });
+    return res.json({ status: "ok", members: userCount });
   } catch (error) {
-    res.status(400).json({ status: "error", error: "Server error" });
+    return res.json({ status: "error", error: error });
 
   }
 });

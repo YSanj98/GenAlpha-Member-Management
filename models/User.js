@@ -27,6 +27,11 @@ const userSchema = new schema(
       minLength: [4, "Password should be greater than 4 characters"],
       select: false,
     },
+
+    isMentor: {
+      type: Boolean,
+      default: false,
+    },
     phoneNumber: {
       type: Number,
     },

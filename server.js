@@ -1,19 +1,14 @@
 const app = require("./app");
 const connectDb = require("./database/database");
-require('dotenv').config();
-const cloudinary = require('cloudinary').v2;
-
-
-if (process.env.NODE_ENV == "production") {
-  require("dotenv").config({ path: path.join(__dirname, "config", ".env") });
-}
+const cloudinary = require("cloudinary").v2;
 
 connectDb();
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  timeout: 1000
 })
 
 const server = app.listen(process.env.PORT, () => {

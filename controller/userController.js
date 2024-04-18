@@ -24,6 +24,15 @@ router.post("/register", async (req, res) => {
     return res.json({ status: "error", error: "Invalid email format" });
   }
 
+    // Password validation using regex
+    const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.json({
+        status: "error",
+        error: "Invalid password format"
+      });
+    }
+
   // Check if password and confirmPassword are the same
   if (password !== confirmPassword) {
     return res.json({ status: "error", error: "Passwords do not match" });
@@ -55,10 +64,15 @@ router.post("/register", async (req, res) => {
 //user login api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
-  const user = await User.findOne({ username }).select("+password");
+  const user = await User.findOne(
+    { $or: [{ email: username }, { username: username }] }
+  ).select("+password");
 
-  if (!user) {
-    return res
+  if(username && password === "") {
+    return res.json({ status: "error", error: "no data" });
+  }
+
+  if (!user) {    return res
       .json({ status: "error" , error: "User Not Found" });
   }else if (user && await bcrypt.compare(password, user.password)) {
     //compare password with hashed password

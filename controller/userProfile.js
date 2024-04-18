@@ -4,7 +4,18 @@ const fs = require("fs");
 const path = require("path");
 const User = require("../models/User.js");
 const isAuthenticated = require("../middleware/auth.js");
-const cloudinary = require("cloudinary");
+const { upload } = require("../utils/multer.js");
+const mongoose = require('mongoose'); 
+
+
+// Function to format date to YYYY/MM/DD format
+function formatDate(date) {
+  const formattedDate = new Date(date);
+  const year = formattedDate.getFullYear();
+  const month = String(formattedDate.getMonth() + 1).padStart(2, "0");
+  const day = String(formattedDate.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 
 //get user api endpoint---------------------------------------------------------------------------------------------------------------------------
@@ -46,6 +57,57 @@ router.get("/getSocialLinks", isAuthenticated, async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
+//get academic details for edit api endpoint---------------------------------------------------------------------------------------------------------------------------
+router.get("/getAcademicDetails/:id", isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("academicDetails");
+    // Directly using the _id property for comparison
+    const academic = user.academicDetails.find(
+      (academicDetail) => academicDetail._id.toString() === req.params.id
+    );
+    if (academic) {
+      // Format start date and end date to YYYY/MM/DD format
+      const formattedAcademic = {
+        ...academic._doc,
+        startDate: formatDate(academic.startDate),
+        endDate: formatDate(academic.endDate)
+      };
+      res.json({ academic: formattedAcademic }); // Send back the found academic detail with formatted dates
+    } else {
+      res.status(404).send("Academic detail not found");
+    }
+  } catch (err) {
+    console.error(err); // Logging the actual error can help in debugging
+    res.status(500).send("Server error");
+  }
+});
+
+//get professional details for edit api endpoint---------------------------------------------------------------------------------------------------------------------------
+router.get("/getProfessionalDetails/:id", isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("professionalDetails");
+    // Directly using the _id property for comparison
+    const professional = user.professionalDetails.find(
+      (professionalDetails) => professionalDetails._id.toString() === req.params.id
+    );
+    if (professional) {
+      // Format start date and end date to YYYY/MM/DD format
+      const formattedProfessional = {
+        ...professional._doc,
+        startDate: formatDate(professional.startDate),
+        endDate: formatDate(professional.endDate)
+      };
+      res.json({ professional: formattedProfessional }); // Send back the found professional detail with formatted dates
+    } else {
+      res.status(404).send("Professional detail not found");
+    }
+  } catch (err) {
+    console.error(err); // Logging the actual error can help in debugging
+    res.status(500).send("Server error");
+  }
+});
+
 
 //add personal details api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/personalDetails", isAuthenticated, async (req, res) => {
@@ -127,6 +189,44 @@ router.post("/academicDetails", isAuthenticated, async (req, res) => {
   }
 });
 
+//
+router.post("/editedAcademicDetails/:id", isAuthenticated, async (req, res) => {
+  const { institute, degree, startDate, endDate, grade } = req.body;
+  console.log(req.params.id)
+
+  const user = await User.findById(req.user.id);
+
+  try {
+    const response = await User.updateOne(
+      { _id: req.user.id },
+      
+      
+      {
+        $set: {
+          academicDetails: {
+            institute,
+            degree,
+            startDate,
+            endDate,
+            grade,
+          },
+        },
+      }
+    );
+
+    res
+      .status(200)
+      .json({ status: "ok", message: "Details added successfully" });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res
+        .status(409)
+        .json({ status: "error", error: "Username already in use" });
+    }
+    throw error;
+  }
+});
+
 //add professional details api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/professionalDetails", isAuthenticated, async (req, res) => {
   const {
@@ -146,6 +246,51 @@ router.post("/professionalDetails", isAuthenticated, async (req, res) => {
       { _id: req.user.id },
       {
         $push: {
+          professionalDetails: {
+            position,
+            empType,
+            companyName,
+            locationType,
+            startDate,
+            endDate,
+            skills,
+          },
+        },
+      }
+    );
+
+    res.status(200).json({
+      status: "ok",
+      message: "Professional details added successfully",
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res
+        .status(409)
+        .json({ status: "error", error: "Username already in use" });
+    }
+    throw error;
+  }
+});
+
+router.post("/editedProfessionalDetails/:id", isAuthenticated, async (req, res) => {
+  const {
+    position,
+    empType,
+    companyName,
+    locationType,
+    startDate,
+    endDate,
+    skills,
+  } = req.body;
+
+  const user = await User.findById(req.user.id);
+
+  try {
+    const response = await User.updateOne(
+      { _id: req.user.id },
+      {
+        $set: {
           professionalDetails: {
             position,
             empType,
@@ -322,12 +467,10 @@ router.delete("/deleteProfessional/:id", isAuthenticated, async (req, res) => {
     }
     user.professionalDetails.splice(professionalIndex, 1);
     await user.save();
-    res
-      .status(200)
-      .json({
-        status: "ok",
-        message: "professional qualification deleted successfully",
-      });
+    res.status(200).json({
+      status: "ok",
+      message: "professional qualification deleted successfully",
+    });
   } catch (error) {
     res.status(500).json({ status: "error", error: "Server error" });
   }
@@ -365,62 +508,72 @@ router.delete("/deleteInterest/:id", isAuthenticated, async (req, res) => {
 });
 
 //profile picture upload api endpoint---------------------------------------------------------------------------------------------------------------------------
-router.post("/photoUpload", isAuthenticated, async (req, res) => {
-  try {
-    const fileStr = req.body.data;
-
+router.post(
+  "/photoUpload",
+  upload.single("file"),
+  isAuthenticated,
+  async (req, res) => {
     const user = await User.findById(req.user.id);
-    const currentProfilePictureUrl = user.profilePicture;
+    try {
+      const filename = req.file.filename;
+      const fileUrl = path.join(filename);
 
-    let publicId;
-    if (currentProfilePictureUrl) {
-      publicId = currentProfilePictureUrl.split('/').pop().split('.')[0];
+      const response = await User.updateOne(
+        { _id: req.user.id },
+        {
+          $set: {
+            profilePicture: fileUrl,
+          },
+        }
+      );
+
+      res
+        .status(200)
+        .json({ status: "ok", message: "Photo uploaded successfully" });
+    } catch (error) {
+      if (error.code === 413) {
+        return res.json({ status: "error", error: "Payload too large" });
+      }
+      return res.json({ status: "error", error: "Server error" });
     }
-
-    const uploadResponse = await cloudinary.v2.uploader.upload(fileStr, {
-      folder: "generationalpha",
-      overwrite: true,
-      public_id: publicId 
-    });
-
-    user.profilePicture = uploadResponse.url;
-    await user.save();
-
-    console.log(uploadResponse);
-    console.log(uploadResponse.url);
-
-    res.json({ status: "ok", message: "Image uploaded successfully" });
-  } catch (error) {
-    console.error("Error uploading photo:", error);
-    res.json({ status: "error", error: "Something Went Wrong" });
   }
-});
+);
 
-//profile picture delete api endpoint---------------------------------------------------------------------------------------------------------------------------    
+//profile picture delete api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.delete("/deleteProfilePicture", isAuthenticated, async (req, res) => {
+  const user = await User.findById(req.user.id);
   try {
-    const user = await User.findById(req.user.id);
-    const currentProfilePictureUrl = user.profilePicture;
-
-    let publicId;
-
-    if (currentProfilePictureUrl) {
-      publicId = currentProfilePictureUrl.split('/').pop().split('.')[0];
+    // Check if the user has a profile picture
+    if (!user.profilePicture) {
+      return res.json({
+        status: "error",
+        error: "No photo found for the user",
+      });
     }
 
-    if (publicId) {
-      await cloudinary.v2.uploader.destroy(publicId);
-    }
+    // Get the filename of the profile picture
+    const filename = path.join(__dirname, "..", "public", user.profilePicture);
+    console.log(filename);
 
-    user.profilePicture = null;
-    await user.save();
+    // Delete the file from the filesystem
+    fs.unlink(filename, async (err) => {
+      if (err) {
+        console.error("Error deleting file:", err);
+        return res.json({ status: "error", error: "Failed to delete photo" });
+      }
 
-    res.json({ status: "ok", message: "Image deleted successfully" });
+      // Update the user's profilePicture field to null
+      const response = await User.updateOne(
+        { _id: req.user.id },
+        { $set: { profilePicture: null } }
+      );
+
+      res.json({ status: "ok", message: "Photo deleted successfully" });
+    });
   } catch (error) {
     console.error("Error deleting photo:", error);
-    res.json({ status: "error", error: "Something Went Wrong" });
+    res.json({ status: "error", error: "Internal server error" });
   }
 });
-
 
 module.exports = router;
