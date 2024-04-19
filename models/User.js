@@ -28,6 +28,10 @@ const userSchema = new schema(
       select: false,
     },
 
+    about: {
+      type: String,
+    },
+
     isMentor: {
       type: Boolean,
       default: false,
