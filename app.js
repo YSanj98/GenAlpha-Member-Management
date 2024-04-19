@@ -27,8 +27,7 @@ app.use(
 
 app.use(express.json({limit:'5mb'}));
 app.use(bodyParser.urlencoded({ limit:'5mb',  extended: true }));
-// app.use(express.static(path.join(__dirname, "public", "images")));
-// app.use(express.static('./public/images'));
+app.use(express.static("uploads/images"));
 app.use(cookieSession({ name: "session", maxAge: 24 * 60 * 60 * 1000, keys:["generationalpha"] }));
 app.use(passport.initialize());
 app.use(passport.session());
