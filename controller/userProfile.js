@@ -120,7 +120,6 @@ router.get("/getAbout", isAuthenticated, async (req, res) => {
 //add about  api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/about", isAuthenticated, async (req, res) => {
   const { about } = req.body;
-  console.log(about);
 
   const user = await User.findById(req.user.id);
   try {
@@ -134,9 +133,8 @@ router.post("/about", isAuthenticated, async (req, res) => {
     );
 
     res.json({ status: "ok", message: "About added successfully" });
-    console.log(user.about);
   } catch (err) {
-    console.log(err);
+
     res.json({ status: "error", error: "Server error" });
   }
 });
@@ -224,7 +222,6 @@ router.post("/academicDetails", isAuthenticated, async (req, res) => {
 //
 router.post("/editedAcademicDetails/:id", isAuthenticated, async (req, res) => {
   const { institute, degree, startDate, endDate, grade } = req.body;
-  console.log(req.params.id);
 
   const user = await User.findById(req.user.id);
 
@@ -587,8 +584,7 @@ router.delete("/deleteProfilePicture", isAuthenticated, async (req, res) => {
     }
 
     // Get the filename of the profile picture
-    const filename = path.join(__dirname, "..", "public", user.profilePicture);
-    console.log(filename);
+    const filename = path.join(__dirname, "..", "public", "images", user.profilePicture);
 
     // Delete the file from the filesystem
     fs.unlink(filename, async (err) => {
