@@ -4,6 +4,7 @@ const sendMails = require("../utils/sendMails.js");
 const isAuthenticated = require("../middleware/auth.js");
 const User = require("../models/User.js");
 
+
 router.post("/applyMentor", isAuthenticated, async (req, res) => {
   const { yearsOfExp, expertise, tools, skills, introduction } = req.body;
 
@@ -94,6 +95,25 @@ console.log(decision);
     return res.json({ status: "Failed", error: error.message });
   }
 });
+
+router.get("/mentorDetails", async (req, res) => {
+  try {
+
+    const mentors = await User.find({ isMentor: true });
+
+
+    if (!mentors || mentors.length === 0) {
+      return res.json({ status: "error", message: "No mentors found" });
+    }
+
+
+    return res.json({ status: "ok", mentors: mentors });
+  } catch (error) {
+
+    return res.json({ status: "error", message: "Internal server error", error: error.message });
+  }
+});
+
 
 
 module.exports = router;
