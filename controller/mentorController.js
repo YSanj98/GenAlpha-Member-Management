@@ -95,5 +95,26 @@ console.log(decision);
   }
 });
 
+// Fetch all mentors
+router.get("/mentors", async (req, res) => {
+  try {
+    const mentors = await User.find();
+    res.status(200).json({ success: true, mentors });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+//Fetch approved mentors
+// router.get("/mentors", async (req, res) => {
+//   try {
+//     const mentors = await User.find({ isMentor: true });
+//     res.status(200).json({ success: true, mentors });
+//   } catch (error) {
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// });
+
+
 
 module.exports = router;

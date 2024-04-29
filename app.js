@@ -16,13 +16,11 @@ const mentor = require("./controller/mentorController");
 const app = express();
 
 app.use(
-  cors(
-    {
-      origin: "https://generationalpha.info",
-      methods: "GET,POST,PUT,DELETE",
-      credential: true,
-    }
-  )
+  cors({
+    origin: ["http://localhost:3000", "https://generationalpha.info"], // Allow requests from these origins
+    methods: "GET,POST,PUT,DELETE",
+    credentials: true, // Allow credentials (cookies, authorization headers, etc.)
+  })
 );
 
 app.use(express.json({limit:'5mb'}));
