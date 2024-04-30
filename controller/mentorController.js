@@ -98,18 +98,39 @@ console.log(decision);
 
 router.get("/mentorDetails", async (req, res) => {
   try {
-
     const mentors = await User.find({ isMentor: true });
-
 
     if (!mentors || mentors.length === 0) {
       return res.json({ status: "error", message: "No mentors found" });
     }
 
+    // Map through the mentors and return only the most recent professional detail
+    const mentorsWithRecentProfessionalDetail = mentors.map(mentor => {
+      const recentProfessionalDetail = mentor.professionalDetails[mentor.professionalDetails.length - 1];
+      return { ...mentor._doc, professionalDetails: recentProfessionalDetail };
+    });
 
-    return res.json({ status: "ok", mentors: mentors });
+    return res.json({ status: "ok", mentors: mentorsWithRecentProfessionalDetail });
   } catch (error) {
+    return res.json({ status: "error", message: "Internal server error", error: error.message });
+  }
+});
 
+router.get("/recentMentors", async (req, res) => {
+  try {
+    const mentors = await User.find({ isMentor: true }).sort({ createdAt: -1 }).limit(4);
+
+    if (!mentors || mentors.length === 0) {
+      return res.json({ status: "error", message: "No mentors found" });
+    }
+
+    const mentorsWithRecentProfessionalDetail = mentors.map(mentor => {
+      const recentProfessionalDetail = mentor.professionalDetails[mentor.professionalDetails.length - 1];
+      return { ...mentor._doc, professionalDetails: recentProfessionalDetail };
+    });
+
+    return res.json({ status: "ok", mentors: mentorsWithRecentProfessionalDetail });
+  } catch (error) {
     return res.json({ status: "error", message: "Internal server error", error: error.message });
   }
 });
