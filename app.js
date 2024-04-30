@@ -4,6 +4,7 @@ const path = require("path");
 const bodyParser = require("body-parser");
 const passport = require("passport");
 const cookieSession = require("cookie-session");
+const dotenv = require("dotenv");
 
 
 const user = require("./controller/userController");
@@ -18,7 +19,7 @@ const app = express();
 app.use(
   cors(
     {
-      origin: "https://generationalpha.info",
+      origin: ["https://generationalpha.info"],
       methods: "GET,POST,PUT,DELETE",
       credential: true,
     }
@@ -33,7 +34,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 if (process.env.NODE_ENV !== "production") {
-  require("dotenv").config({ path: path.join(__dirname, "config", ".env") }); // Define the path to your .env file
+  dotenv.config({ path: path.join(__dirname, "config", ".env") }); // Define the path to your .env file
 }
 
 app.use("/api", user);
