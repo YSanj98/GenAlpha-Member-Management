@@ -5,7 +5,6 @@ const path = require("path");
 const User = require("../models/User.js");
 const isAuthenticated = require("../middleware/auth.js");
 const { upload } = require("../utils/multer.js");
-const mongoose = require("mongoose");
 
 // Function to format date to YYYY/MM/DD format
 function formatDate(date) {

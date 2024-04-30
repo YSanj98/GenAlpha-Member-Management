@@ -11,7 +11,21 @@ router.get("/members", async (req, res) => {
     return res.json({ status: "ok", members: userCount });
   } catch (error) {
     return res.json({ status: "error", error: error });
+  }
+});
 
+router.get("/mentors", async (req, res) => {
+  try {
+    const mentors = await User.find({ isMentor: true });
+    const countMentors = await User.countDocuments({ isMentor: true });
+
+    if (!mentors) {
+      return res.json({ status: "error", error: "No mentors found" });
+    } else {
+      return res.json({ status: "ok", mentors: countMentors });
+    }
+  } catch (error) {
+    return res.json({ status: "error", error: error });
   }
 });
 
