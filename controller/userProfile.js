@@ -218,41 +218,48 @@ router.post("/academicDetails", isAuthenticated, async (req, res) => {
   }
 });
 
-//
+//edit academic details api endpoint--------------------------------------------------------------------------------------------------------------------------- 
 router.post("/editedAcademicDetails/:id", isAuthenticated, async (req, res) => {
   const { institute, degree, startDate, endDate, grade } = req.body;
-
-  const user = await User.findById(req.user.id);
+  const academicDetailId = req.params.id;
 
   try {
-    const response = await User.updateOne(
-      { _id: req.user.id },
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ status: "error", error: "User not found" });
+    }
 
-      {
-        $set: {
-          academicDetails: {
-            institute,
-            degree,
-            startDate,
-            endDate,
-            grade,
-          },
-        },
-      }
+    // Find the index of the academic detail to update
+    const academicDetailIndex = user.academicDetails.findIndex(
+      detail => detail._id.toString() === academicDetailId
     );
 
-    res
-      .status(200)
-      .json({ status: "ok", message: "Details added successfully" });
+    if (academicDetailIndex === -1) {
+      return res.status(404).json({ status: "error", error: "Academic detail not found" });
+    }
+
+    // Update the academic detail
+    user.academicDetails[academicDetailIndex] = {
+      _id: academicDetailId,
+      institute,
+      degree,
+      startDate,
+      endDate,
+      grade
+    };
+
+    await user.save();
+
+    res.status(200).json({ status: "ok", message: "Academic detail updated successfully" });
   } catch (error) {
     if (error.code === 11000) {
-      return res
-        .status(409)
-        .json({ status: "error", error: "Username already in use" });
+      return res.status(409).json({ status: "error", error: "Username already in use" });
     }
-    throw error;
+    res.status(500).json({ status: "error", error: error.message });
   }
 });
+
+
 
 //add professional details api endpoint---------------------------------------------------------------------------------------------------------------------------
 router.post("/professionalDetails", isAuthenticated, async (req, res) => {
