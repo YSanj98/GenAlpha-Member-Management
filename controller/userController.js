@@ -96,7 +96,7 @@ router.post("/forgotPassword", async (req, res) => {
   const user = await User.findOne({email:userIdentifier}); //find user by email or phone number
 
   if (!user) {
-    return res.status(400).json({ status: "error", error: "Invalid username" });
+    return res.json({ status: "error", error: "No User Found" });
   }
 
   const otp = generateOTP(); //generate otp using otp-generator. configs are in utils/generateOTP.js
@@ -121,7 +121,7 @@ router.post("/forgotPassword", async (req, res) => {
       message: `Check ${user.email} and use the OTP to reset your password`,
     });
   } catch (error) {
-    return res.status(400).json({ status: "Failed", error: error.message });
+    return res.json({ status: "Failed", error: error.message });
   }
 });
 
