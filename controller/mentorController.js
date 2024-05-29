@@ -5,29 +5,32 @@ const isAuthenticated = require("../middleware/auth.js");
 const User = require("../models/User.js");
 
 
+
 router.post("/applyMentor", isAuthenticated, async (req, res) => {
-  const { yearsOfExp, expertise, tools, skills, introduction } = req.body;
+  const { yearsOfExp, inUsername, expertise, tools, skills, introduction } = req.body;
+  
 
   const user = await User.findById(req.user.id);
-
+  
   if (!user) {
     return res.json({ status: "error", error: "Invalid user" });
   }
-
+  
   const emailBody = `
   This is the Mentor Application of ${user.firstName} ${user.lastName}. 
-
+  
   Years of Experience: ${yearsOfExp} 
+  Linkedin Username: https://www.linkedin.com/in/${inUsername}/
   Expertise: ${expertise} 
   Tools: ${tools} 
   Skills: ${skills} 
   Introduction: ${introduction} 
-
+  
   click below link to approve or reject the application;
-
+  
   ${process.env.CLIENT_URL_TEST}/applyMentorReview/${user._id}
   `;
-
+  
   try {
     await sendMails({
       //send email to user using nodemailer. configs are in utils/sendMails.js
@@ -36,8 +39,9 @@ router.post("/applyMentor", isAuthenticated, async (req, res) => {
       message: emailBody,
     });
     res.status(201).json({
+      status: "ok",
       success: true,
-      message: `Check email of admin to review mentor application of ${user.firstName} ${user.lastName}`,
+      message: `Check ${process.env.ADMIN_EMAIL} to review mentor application of ${user.firstName} ${user.lastName}`,
     });
   } catch (error) {
     return res.json({ status: "Failed", error: error.message });
