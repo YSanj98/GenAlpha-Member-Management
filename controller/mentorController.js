@@ -139,6 +139,23 @@ router.get("/recentMentors", async (req, res) => {
   }
 });
 
+router.get('/checkMentorStatus', isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('isMentor');
+    if (!user) {
+      return res.status(404).json({ status: 'error', error: 'User not found' });
+    }
 
+    // Check if the user is a mentor
+    if (user.isMentor) {
+      res.status(200).json({ status: 'ok', isMentor: true });
+    } else {
+      res.status(200).json({ status: 'ok', isMentor: false });
+    }
+  } catch (error) {
+    console.error('Error checking mentor status:', error);
+    res.status(500).json({ status: 'error', error: 'Server error' });
+  }
+});
 
 module.exports = router;
