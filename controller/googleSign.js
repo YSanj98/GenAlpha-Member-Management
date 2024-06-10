@@ -1,19 +1,20 @@
 const router = require("express").Router();
 const passport = require("passport");
+require("dotenv").config();
 
-router.get("/login/success", (req,res)=>{
-    if(req.user){
-        res.status(200).json({
-            error:false,
-            message:"Login Success",
-            user:req.user,
-        })
-    }else{
-        res.status(403).json({
-            error:true,
-            message:"Not Authorized",
-        });
-    }
+router.get("/login/success", (req, res) => {
+  if (req.user) {
+    res.status(200).json({
+      error: false,
+      message: "Login Success",
+      user: req.user,
+    });
+  } else {
+    res.status(403).json({
+      error: true,
+      message: "Not Authorized",
+    });
+  }
 });
 
 router.get("/login/failed", (req, res) => {
@@ -24,10 +25,10 @@ router.get("/login/failed", (req, res) => {
 });
 
 router.get(
-  "/google/Callback",
+  "/google/callback",
   passport.authenticate("google", {
     successRedirect: "http://localhost:3000/home",
-    failureRedirect: "http://localhost:3000/login",
+    failureRedirect: 'http://localhost:3000/login',
   })
 );
 
