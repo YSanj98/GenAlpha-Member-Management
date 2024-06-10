@@ -18,6 +18,11 @@ const googleSign = require('./controller/googleSign')
 
 const app = express();
 
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config({ path: path.join(__dirname, ".env") }); // Define the path to your .env file
+}
+
+
 app.use(
   cors({
     origin: process.env.CLIENT_URL_TEST,
@@ -39,9 +44,6 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-if (process.env.NODE_ENV !== "production") {
-  dotenv.config({ path: path.join(__dirname, ".env") }); // Define the path to your .env file
-}
 
 app.use("/api", user);
 app.use("/api", settings);

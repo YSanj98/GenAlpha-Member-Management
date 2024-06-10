@@ -66,6 +66,7 @@ const {decision} = req.body;
   try {
     await user.save();
     res.status(201).json({
+
       success: true,
       message: `User ${user.firstName} ${user.lastName} is now a mentor`,
     });
@@ -147,10 +148,10 @@ router.get('/checkMentorStatus', isAuthenticated, async (req, res) => {
     }
 
     // Check if the user is a mentor
-    if (user.isMentor) {
-      res.status(200).json({ status: 'ok', isMentor: true });
+    if (user.isMentor == true) {
+      res.json({ message: 'User is a Mentor', isMentor: true });
     } else {
-      res.status(200).json({ status: 'ok', isMentor: false });
+      res.json({ message: 'User is not a Mentor', isMentor: false });
     }
   } catch (error) {
     console.error('Error checking mentor status:', error);
